@@ -1,55 +1,58 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
-import Sidebar from '@/components/Sidebar';
+import React, { useEffect, useState } from 'react';
+import { ShieldCheck } from 'lucide-react';
+import AppShell from '@/components/AppShell';
 import Table from '@/components/Table';
+import { api } from '@/lib/api';
 
 export default function AuditPage() {
-  const [rows, setRows] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
     api('/audit')
-      .then(setRows)
+      .then(setLogs)
       .catch((e) => setError(e.message));
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-slate-950">
-      <Sidebar />
-      <main className="flex-1 p-8 overflow-y-auto">
-        <h1 className="text-3xl font-bold text-white mb-1">Immutable Security Audit Trail</h1>
-        <p className="text-sm text-slate-400 mb-6">
-          Tracks who mutated what, when, and from which IP (passwords &amp; tokens automatically redacted)
-        </p>
+    <AppShell>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Security Audit Logs</h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Immutable append-only ledger of state mutations across your organization
+          </p>
+        </div>
 
-        {error && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-sm text-rose-300">
-            {error}
-          </div>
-        )}
+        <span className="px-3.5 py-2 rounded-xl ops-card text-xs font-bold text-[#00df82] flex items-center gap-2">
+          <ShieldCheck size={15} />
+          <span>{logs.length} Verified Event(s)</span>
+        </span>
+      </div>
 
+      {error ? (
+        <div className="ops-card rounded-2xl p-6 text-sm text-amber-300 border border-amber-500/30">
+          RBAC Restriction: {error} — Audit trail inspection requires COMPANY_ADMIN or MANAGER privileges.
+        </div>
+      ) : (
         <Table
-          columns={['Timestamp', 'Actor', 'Role', 'Method / Action', 'Route / Entity', 'IP', 'Details']}
-          rows={rows.map((a) => [
-            new Date(a.createdAt).toLocaleString(),
-            a.actor ? `${a.actor.name || a.actor.email}` : 'System',
-            a.actor?.role ? (
-              <span key="r" className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-800 text-sky-300">
-                {a.actor.role}
-              </span>
-            ) : (
-              '—'
-            ),
-            <span key="ac" className="font-mono text-xs font-bold text-amber-300">{a.action}</span>,
-            <span key="en" className="font-mono text-xs text-slate-300">{a.entity}</span>,
-            a.ipAddress ?? '—',
-            <span key="dt" className="font-mono text-[11px] text-slate-400 max-w-xs truncate block">
-              {a.details ? JSON.stringify(a.details) : '—'}
+          columns={['Timestamp', 'Actor', 'Action', 'Entity', 'Metadata']}
+          rows={logs.map((l) => [
+            <span key="t" className="text-xs text-slate-400 whitespace-nowrap">
+              {new Date(l.createdAt).toLocaleString()}
             </span>,
+            l.actor ? `${l.actor.name} (${l.actor.role})` : 'System',
+            <span key="a" className="font-mono text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-[#00df82] font-bold">
+              {l.action}
+            </span>,
+            `${l.entity} ${l.entityId ? `· ${l.entityId.slice(0, 8)}` : ''}`,
+            <code key="m" className="text-[11px] text-slate-400">
+              {l.details ? JSON.stringify(l.details) : '—'}
+            </code>,
           ])}
         />
-      </main>
-    </div>
+      )}
+    </AppShell>
   );
 }

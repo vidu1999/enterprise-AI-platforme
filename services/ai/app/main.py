@@ -114,7 +114,9 @@ def rule_based_answer(question: str, ctx: Dict[str, Any], citations: Optional[Li
             return "Pending approvals: " + ", ".join(a.get("title", "") for a in pending) + "."
         return "No pending approvals."
 
-    if "employee" in q or "headcount" in q:
+    if "employee" in q or "headcount" in q or "staff" in q:
+        if ctx.get("employeeDataRestricted"):
+            return f"Access restricted for VIEWER role (0 employees exposed across {ctx.get('assetCount', 0)} assets)."
         return f"The company has {ctx.get('employeeCount', 0)} employees across {ctx.get('assetCount', 0)} assets."
 
     if citations:
@@ -165,6 +167,7 @@ async def ask(req: AskRequest):
     ctx = dict(req.context)
     if req.role == "VIEWER":
         ctx["employeeCount"] = 0
+        ctx["employeeDataRestricted"] = True
         ctx["workOrders"] = []
 
     citations = match_citations(req.question, ctx.get("documents", []))

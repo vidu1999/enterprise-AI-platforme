@@ -5,7 +5,7 @@ export async function seedEnterpriseData(db: SqlExecutor): Promise<void> {
   const passwordHash = await bcrypt.hash('Demo1234!', 12);
 
   // ---------------------------------------------------------------------------
-  // Tenant 1: Lanka Precision Engineering PLC (Primary Demo Company)
+  // Tenant 1: OpsPilot (Pvt) Ltd — Colombo, Sri Lanka
   // ---------------------------------------------------------------------------
   const existing = await db.one<{ id: string }>(
     `SELECT id FROM "companies" WHERE slug = $1`,
@@ -18,24 +18,24 @@ export async function seedEnterpriseData(db: SqlExecutor): Promise<void> {
      VALUES ($1, $2, $3, $4, $5, $6, 'LKR', 'Asia/Colombo')
      RETURNING id`,
     [
-      'Lanka Precision Engineering PLC',
+      'OpsPilot (Pvt) Ltd',
       'demo-company',
-      'ops@lankaprecision.lk',
+      'ops@opspilot.lk',
       '+94 11 264 8800',
-      'Lot 14, Industrial Estate, Moratuwa, Western Province, Sri Lanka',
-      'Precision Manufacturing & Industrial Engineering',
+      'No. 123, Main Street, Colombo, Sri Lanka',
+      'Enterprise Operations & Industrial Engineering',
     ],
   ))!;
 
   const cid = company.id;
 
-  // 5 Departments
+  // Departments matching reference Department Overview + Industrial Operations
   const deptSpecs = [
-    ['Maintenance & Reliability', 'Preventive, predictive, and breakdown maintenance across Plant A & B'],
-    ['Production & CNC Machining', '5-axis CNC milling, turning, stamping, and robotic assembly lines'],
-    ['Warehouse & Supply Chain', 'MRO spare parts stores, vendor procurement, and stock control'],
-    ['Quality Assurance', 'ISO 9001 metrology, calibration, and process compliance'],
-    ['Facilities & Power Systems', 'HV switchgear, standby diesel generation, boilers, and HVAC'],
+    ['IT', 'Enterprise infrastructure, cloud systems, and internal tooling'],
+    ['Operations', 'Plant floor operations, logistics, and preventive reliability'],
+    ['HR', 'Talent management, employee onboarding, and compliance'],
+    ['Finance', 'Procurement budgeting, vendor payables, and cost auditing'],
+    ['Maintenance', 'Electro-mechanical equipment servicing and emergency repairs'],
   ];
   const deptIds: Record<string, string> = {};
   for (const [name, description] of deptSpecs) {
@@ -46,18 +46,20 @@ export async function seedEnterpriseData(db: SqlExecutor): Promise<void> {
     deptIds[name] = d.id;
   }
 
-  // Core Role Accounts + Engineering Staff
+  // Core Role Accounts + Sri Lankan Team Roster matching Reference UI
   const staffSpecs = [
-    ['admin@demo.local', 'Kasun', 'Jayawardena', 'COMPANY_ADMIN', 'Maintenance & Reliability', 'VP of Operations', '+94 77 210 4401'],
-    ['manager@demo.local', 'Nimal', 'Perera', 'MANAGER', 'Maintenance & Reliability', 'Maintenance & Reliability Manager', '+94 77 312 8890'],
-    ['tech@demo.local', 'Dilshan', 'Silva', 'EMPLOYEE', 'Maintenance & Reliability', 'Senior Mechatronics Technician', '+94 71 445 2210'],
-    ['viewer@demo.local', 'Tharushi', 'Fernando', 'VIEWER', 'Quality Assurance', 'Internal Operations Auditor', '+94 76 890 1142'],
-    ['ruwan.bandara@demo.local', 'Ruwan', 'Bandara', 'MANAGER', 'Warehouse & Supply Chain', 'Procurement & Stores Lead', '+94 77 501 9923'],
-    ['chamari.wickramasinghe@demo.local', 'Chamari', 'Wickramasinghe', 'MANAGER', 'Production & CNC Machining', 'CNC Production Superintendent', '+94 77 620 7731'],
-    ['ashan.gunasekara@demo.local', 'Ashan', 'Gunasekara', 'EMPLOYEE', 'Facilities & Power Systems', 'Electrical & Generator Specialist', '+94 71 883 1204'],
-    ['kavindi.rajapaksha@demo.local', 'Kavindi', 'Rajapaksha', 'EMPLOYEE', 'Quality Assurance', 'Calibration Engineer', '+94 76 332 9081'],
-    ['malith.wijesinghe@demo.local', 'Malith', 'Wijesinghe', 'EMPLOYEE', 'Maintenance & Reliability', 'Hydraulics & Millwright Technician', '+94 71 912 4500'],
-    ['oshadi.senanayake@demo.local', 'Oshadi', 'Senanayake', 'EMPLOYEE', 'Warehouse & Supply Chain', 'Inventory Control Analyst', '+94 77 411 6720'],
+    ['admin@demo.local', 'Vidura', 'Kavinda', 'COMPANY_ADMIN', 'IT', 'Administrator', '+94 77 210 4401'],
+    ['nimesh@company.lk', 'Nimesh', 'Perera', 'EMPLOYEE', 'IT', 'Developer', '+94 77 312 1102'],
+    ['tharushi@company.lk', 'Tharushi', 'Silva', 'MANAGER', 'HR', 'HR Manager', '+94 77 415 8890'],
+    ['manager@demo.local', 'Kavindu', 'Fernando', 'MANAGER', 'Operations', 'Operations Manager', '+94 77 501 9923'],
+    ['sashika@company.lk', 'Sashika', 'Wijesinghe', 'EMPLOYEE', 'Finance', 'Accountant', '+94 71 620 7731'],
+    ['dilini@company.lk', 'Dilini', 'Rathnayaka', 'EMPLOYEE', 'HR', 'Executive', '+94 76 883 1204'],
+    ['tech@demo.local', 'Dilshan', 'Silva', 'EMPLOYEE', 'Maintenance', 'Senior Technician', '+94 71 445 2210'],
+    ['viewer@demo.local', 'Tharushi', 'Fernando', 'VIEWER', 'Finance', 'Compliance Auditor', '+94 76 890 1142'],
+    ['ashan@company.lk', 'Ashan', 'Gunasekara', 'EMPLOYEE', 'Operations', 'Generator & Power Specialist', '+94 71 912 4500'],
+    ['ruwan@company.lk', 'Ruwan', 'Bandara', 'MANAGER', 'Operations', 'Procurement Lead', '+94 77 411 6720'],
+    ['kavindi@company.lk', 'Kavindi', 'Rajapaksha', 'EMPLOYEE', 'IT', 'Systems Engineer', '+94 76 332 9081'],
+    ['malith@company.lk', 'Malith', 'Jayasuriya', 'EMPLOYEE', 'IT', 'DevOps Engineer', '+94 77 778 3310'],
   ];
   const userIds: Record<string, string> = {};
   for (const [email, first, last, role, dept, title, phone] of staffSpecs) {
@@ -70,12 +72,12 @@ export async function seedEnterpriseData(db: SqlExecutor): Promise<void> {
     userIds[email] = u.id;
   }
 
-  // 4 Suppliers
+  // Suppliers
   const supplierSpecs = [
-    ['Colombo Industrial Bearings Ltd', 'sales@colombobearings.lk', '+94 11 243 7711', '128 Panchikawatta Rd, Colombo 10', 3],
-    ['Ceylon Lubricants & Hydraulics', 'orders@ceylonlube.lk', '+94 11 258 9900', '42 Peliyagoda Industrial Park', 2],
+    ['Colombo Tech & Industrial Supplies', 'sales@colombotech.lk', '+94 11 243 7711', '128 Union Place, Colombo 02', 3],
+    ['Ceylon Power & Hydraulics Ltd', 'orders@ceylonpower.lk', '+94 11 258 9900', '42 Peliyagoda Industrial Park', 2],
     ['Kelani Electrical & Automation', 'industrial@kelanielec.lk', '+94 11 291 4400', 'Biyagama Export Processing Zone', 5],
-    ['Asia CNC Spindle & Tooling Pte', 'export@asiacnctooling.sg', '+65 6742 8810', 'Jurong East Industrial Sector, Singapore', 10],
+    ['Lanka Workspace & Office Solutions', 'b2b@lankaworkspace.lk', '+94 11 250 3310', '64 Duplication Rd, Colombo 04', 4],
   ];
   const supplierIds: Record<string, string> = {};
   for (const [name, email, phone, address, lead] of supplierSpecs) {
@@ -87,16 +89,14 @@ export async function seedEnterpriseData(db: SqlExecutor): Promise<void> {
     supplierIds[name] = s.id;
   }
 
-  // 8 Industrial Machines / Assets
+  // Assets / Machines matching AI Assistant & Maintenance tables
   const assetSpecs = [
-    ['CNC-104', 'Mazak Integrex 5-Axis CNC Center', 'CNC Machining', 'Plant A — Bay 2', 'MAINTENANCE', 60, 14],
-    ['HYD-008', 'Schuler 200T Hydraulic Stamping Press', 'Heavy Forming', 'Plant A — Bay 4', 'OPERATIONAL', 45, 7],
-    ['GEN-001', 'Cummins C250D5 250kVA Standby Generator', 'Power Generation', 'Utility Yard North', 'OPERATIONAL', 90, 28],
-    ['CMP-012', 'Atlas Copco GA37 VSD Rotary Compressor', 'Compressed Air', 'Utility Room B', 'OPERATIONAL', 60, 5],
-    ['RBT-002', 'ABB IRB-2600 Robotic Welding Cell', 'Robotics', 'Plant B — Line 1', 'OPERATIONAL', 90, 42],
-    ['BLR-003', 'Cochran Industrial Steam Boiler 4T/h', 'Thermal Systems', 'Boiler House', 'OPERATIONAL', 30, 3],
-    ['CHL-005', 'Carrier 180TR Process Water Chiller', 'HVAC & Cooling', 'Plant B — Roof Deck', 'OPERATIONAL', 90, 55],
-    ['FLT-019', 'Toyota 8FBN30 3T Electric Forklift', 'Material Handling', 'Central MRO Warehouse', 'OPERATIONAL', 45, 19],
+    ['GEN-001', 'Generator #1', 'Power Generation', 'Utility Yard North', 'OPERATIONAL', 90, 14],
+    ['CMP-002', 'Compressor #2', 'Compressed Air', 'Plant A — Utility Bay', 'OPERATIONAL', 60, 7],
+    ['HVAC-001', 'HVAC Unit #1', 'Climate & Cooling', 'Main HQ — Roof Deck', 'OPERATIONAL', 60, 21],
+    ['AC-003', 'AC Unit #3', 'Climate & Cooling', 'Server Room B', 'MAINTENANCE', 45, 3],
+    ['CNV-A', 'Conveyor A', 'Material Handling', 'Assembly Line 1', 'OPERATIONAL', 30, 5],
+    ['CNC-104', 'Mazak 5-Axis CNC', 'CNC Machining', 'Plant A — Bay 2', 'OPERATIONAL', 60, 18],
   ];
   const assetIds: Record<string, string> = {};
   for (const [code, name, category, location, status, intervalDays, daysUntilNext] of assetSpecs) {
@@ -110,18 +110,16 @@ export async function seedEnterpriseData(db: SqlExecutor): Promise<void> {
     assetIds[code as string] = a.id;
   }
 
-  // 10 Inventory Items (3 intentionally below reorder_level for live alerting & AI demo)
+  // Inventory Items (In Stock, Low Stock, and Out of Stock!)
   const itemSpecs: Array<[string, string, string, string, number, number, number, string, string]> = [
-    ['BRG-6205', 'SKF Deep Groove Ball Bearing 6205-2RSH', 'Bearings', 'pcs', 4, 12, 4850, 'Colombo Industrial Bearings Ltd', 'Aisle A-01'],
-    ['HYD-SEAL-200', 'Viton High-Pressure Cylinder Seal Kit 200T', 'Hydraulics', 'kit', 2, 6, 38500, 'Ceylon Lubricants & Hydraulics', 'Aisle B-04'],
-    ['IGBT-MOD-75A', 'Infineon 1200V 75A Servo Drive IGBT Module', 'Electronics', 'pcs', 1, 4, 92000, 'Kelani Electrical & Automation', 'ESD Vault 2'],
-    ['SPN-BT40-SET', 'BT40 Precision Pull-Stud & Collet Set', 'CNC Tooling', 'set', 18, 8, 26000, 'Asia CNC Spindle & Tooling Pte', 'Tool Crib 1'],
-    ['OIL-ISO68-20L', 'Mobil DTE 26 Hydraulic Oil ISO VG 68 (20L)', 'Lubricants', 'drum', 24, 10, 34200, 'Ceylon Lubricants & Hydraulics', 'Lube Store'],
-    ['OIL-15W40-20L', 'Heavy-Duty Diesel Engine Oil 15W-40 (20L)', 'Lubricants', 'drum', 16, 6, 29500, 'Ceylon Lubricants & Hydraulics', 'Lube Store'],
-    ['FLT-AIR-GA37', 'Atlas Copco GA37 Intake & Oil Separator Kit', 'Filtration', 'kit', 7, 5, 46800, 'Colombo Industrial Bearings Ltd', 'Aisle C-02'],
-    ['CNT-3P-80A', 'Schneider TeSys 3-Pole 80A Contactor', 'Electrical', 'pcs', 14, 6, 19400, 'Kelani Electrical & Automation', 'Aisle D-01'],
-    ['SNS-VIB-420', 'Industrial 4-20mA Piezo Vibration Sensor', 'Instrumentation', 'pcs', 9, 4, 41000, 'Kelani Electrical & Automation', 'ESD Vault 1'],
-    ['BLT-HTD-8M', 'Gates Poly Chain GT Carbon Timing Belt 8M', 'Power Transmission', 'pcs', 15, 8, 15800, 'Colombo Industrial Bearings Ltd', 'Aisle A-05'],
+    ['LAP-5520', 'Laptop Dell Inspiron', 'Electronics', 'pcs', 25, 8, 92000, 'Colombo Tech & Industrial Supplies', 'IT Vault A1'],
+    ['MSE-WL01', 'Wireless Mouse', 'Electronics', 'pcs', 8, 12, 4500, 'Colombo Tech & Industrial Supplies', 'IT Store B2'],
+    ['CHR-ERG1', 'Office Chair', 'Furniture', 'pcs', 0, 5, 48000, 'Lanka Workspace & Office Solutions', 'Warehouse C1'],
+    ['CBL-USBC', 'USB-C Cable', 'Accessories', 'pcs', 150, 25, 1850, 'Colombo Tech & Industrial Supplies', 'IT Store B1'],
+    ['KEY-MECH', 'Mechanical Keyboard', 'Electronics', 'pcs', 42, 10, 14500, 'Colombo Tech & Industrial Supplies', 'IT Store B3'],
+    ['BRG-6205', 'SKF Ball Bearing 6205', 'Spare Parts', 'pcs', 4, 10, 4850, 'Ceylon Power & Hydraulics Ltd', 'MRO Aisle A1'],
+    ['IGBT-75A', 'Infineon 75A Servo Module', 'Electronics', 'pcs', 2, 5, 86000, 'Kelani Electrical & Automation', 'ESD Vault 2'],
+    ['OIL-15W40', 'Diesel Generator Oil 15W-40', 'Lubricants', 'drum', 18, 6, 29500, 'Ceylon Power & Hydraulics Ltd', 'Lube Bay'],
   ];
   const itemIds: Record<string, string> = {};
   for (const [sku, name, cat, unit, qty, reorder, cost, sup, loc] of itemSpecs) {
@@ -132,110 +130,91 @@ export async function seedEnterpriseData(db: SqlExecutor): Promise<void> {
     ))!;
     itemIds[sku] = it.id;
 
-    await db.query(
-      `INSERT INTO "inventory_transactions" (company_id, item_id, actor_id, type, quantity, note)
-       VALUES ($1, $2, $3, 'IN', $4, 'Initial MRO stock verification')`,
-      [cid, it.id, userIds['ruwan.bandara@demo.local'], qty],
-    );
+    if (qty > 0) {
+      await db.query(
+        `INSERT INTO "inventory_transactions" (company_id, item_id, actor_id, type, quantity, note)
+         VALUES ($1, $2, $3, 'IN', $4, 'Initial stock balance verified')`,
+        [cid, it.id, userIds['manager@demo.local'], qty],
+      );
+    }
   }
 
-  // 8 Work Orders with realistic costs across machines
+  // Work Orders matching Reference Maintenance Screen & AI Top 3 Machines:
+  // 1. Generator #1 – Rs. 125,000
+  // 2. Compressor #2 – Rs. 98,000
+  // 3. HVAC Unit #1 – Rs. 87,000
   const woSpecs: Array<[string, string, string, string, string, string, string, number, number, number]> = [
     [
-      'CNC-104 high-speed spindle bearing & servo drive overhaul',
-      'Spindle vibration reached 6.1 mm/s RMS during titanium roughing. Replace ceramic hybrid bearings and inspect IGBT servo stage.',
+      'Generator Service',
+      '500-hour full diesel generator service, injector calibration, andAVR load test on Generator #1.',
       'IN_PROGRESS',
-      'CRITICAL',
-      'CORRECTIVE',
-      'CNC-104',
-      'tech@demo.local',
-      385000,
-      412000,
-      2,
-    ],
-    [
-      'HYD-008 main ram cylinder seal replacement & pressure test',
-      'Minor weeping detected on 200T main cylinder rod seal; replace Viton seal kit and hydro-test to 280 bar.',
-      'COMPLETED',
-      'HIGH',
-      'CORRECTIVE',
-      'HYD-008',
-      'malith.wijesinghe@demo.local',
-      195000,
-      218500,
-      -4,
-    ],
-    [
-      'GEN-001 500-hour preventive service & load-bank test',
-      'Replace lube oil, fuel/water separators, inspect alternator AVR, and run 1-hour 80% kW step load test.',
-      'COMPLETED',
       'HIGH',
       'PREVENTIVE',
       'GEN-001',
-      'ashan.gunasekara@demo.local',
-      142000,
-      136000,
-      -8,
-    ],
-    [
-      'CMP-012 oil separator element change & VSD thermal cleaning',
-      'Differential pressure across separator reached 0.75 bar; scheduled preventive element replacement.',
-      'ASSIGNED',
-      'MEDIUM',
-      'PREVENTIVE',
-      'CMP-012',
       'tech@demo.local',
-      92000,
-      0,
-      4,
+      125000,
+      125000,
+      2,
     ],
     [
-      'BLR-003 safety relief valve statutory inspection & blowdown calibration',
-      'Monthly statutory boiler safety check and TDS conductivity sensor verification.',
+      'AC Repair',
+      'Replace evaporator fan capacitor and recharge R410A refrigerant on AC Unit #3.',
       'OPEN',
-      'HIGH',
-      'INSPECTION',
-      'BLR-003',
-      'ashan.gunasekara@demo.local',
-      68000,
+      'MEDIUM',
+      'CORRECTIVE',
+      'AC-003',
+      'ashan@company.lk',
+      42000,
       0,
-      3,
+      -2, // Overdue!
     ],
     [
-      'RBT-002 Axis-4 harmonic reducer grease sample & TCP calibration',
-      'Routine ferrography grease sampling and weld torch TCP laser verification.',
+      'Conveyor Fix',
+      'Drive belt re-tensioning and proximity sensor alignment on Conveyor A.',
+      'IN_PROGRESS',
+      'HIGH',
+      'CORRECTIVE',
+      'CNV-A',
+      'tech@demo.local',
+      64000,
+      58000,
+      1,
+    ],
+    [
+      'Compressor Valve & Separator Overhaul',
+      'Replace air/oil separator kit and intake unloader valve on Compressor #2.',
+      'COMPLETED',
+      'HIGH',
+      'PREVENTIVE',
+      'CMP-002',
+      'tech@demo.local',
+      95000,
+      98000,
+      -5,
+    ],
+    [
+      'Chiller Condenser Descaling & Calibration',
+      'Quarterly chiller heat-exchanger cleaning and airflow balancing on HVAC Unit #1.',
       'COMPLETED',
       'MEDIUM',
       'PREVENTIVE',
-      'RBT-002',
-      'tech@demo.local',
-      84000,
-      79500,
-      -12,
+      'HVAC-001',
+      'ashan@company.lk',
+      85000,
+      87000,
+      -9,
     ],
     [
-      'CHL-005 condenser tube descaling & refrigerant superheat check',
-      'Approach temperature rose by 2.4°C; schedule chemical descaling during weekend window.',
-      'ON_HOLD',
-      'MEDIUM',
-      'PREVENTIVE',
-      'CHL-005',
-      'malith.wijesinghe@demo.local',
-      115000,
-      0,
-      9,
-    ],
-    [
-      'FLT-019 mast chain tensioning & traction battery cell balance',
-      'Quarterly forklift safety check for MRO warehouse fleet.',
+      '5-Axis Spindle Vibration Inspection',
+      'Piezo sensor verification and pull-stud clamping force test on Mazak 5-Axis CNC.',
       'OPEN',
-      'LOW',
+      'CRITICAL',
       'INSPECTION',
-      'FLT-019',
-      'malith.wijesinghe@demo.local',
-      32000,
+      'CNC-104',
+      'tech@demo.local',
+      76000,
       0,
-      10,
+      -1, // Overdue!
     ],
   ];
 
@@ -264,17 +243,18 @@ export async function seedEnterpriseData(db: SqlExecutor): Promise<void> {
     );
   }
 
-  // Purchase Orders + Pending Approvals
-  const po1Total = 20 * 4850 + 4 * 92000; // 465,000 LKR
+  // Purchase Orders & Approvals (~Rs. 2.4M monthly procurement volume)
+  const po1Total = 15 * 48000 + 20 * 4500; // Rs. 810,000
   const po1 = (await db.one<{ id: string }>(
     `INSERT INTO "purchase_orders" (company_id, number, supplier_id, status, auto_generated, notes, total)
-     VALUES ($1, 'PO-2026-0101', $2, 'PENDING', TRUE, 'Automated low-stock replenishment for critical CNC & bearing spares', $3)
+     VALUES ($1, 'PO-105', $2, 'PENDING', TRUE, 'Automated restock for out-of-stock Office Chairs & Wireless Mice', $3)
      RETURNING id`,
-    [cid, supplierIds['Colombo Industrial Bearings Ltd'], po1Total],
+    [cid, supplierIds['Lanka Workspace & Office Solutions'], po1Total],
   ))!;
   await db.query(
-    `INSERT INTO "purchase_order_lines" (order_id, item_id, quantity, unit_cost) VALUES ($1, $2, 20, 4850), ($1, $3, 3, 92000)`,
-    [po1.id, itemIds['BRG-6205'], itemIds['IGBT-MOD-75A']],
+    `INSERT INTO "purchase_order_lines" (order_id, item_id, quantity, unit_cost)
+     VALUES ($1, $2, 15, 48000), ($1, $3, 20, 4500)`,
+    [po1.id, itemIds['CHR-ERG1'], itemIds['MSE-WL01']],
   );
   await db.query(
     `INSERT INTO "approvals" (company_id, type, ref_id, title, requested_by_id, amount, status)
@@ -282,67 +262,62 @@ export async function seedEnterpriseData(db: SqlExecutor): Promise<void> {
     [
       cid,
       po1.id,
-      `Purchase Order PO-2026-0101 — Colombo Industrial Bearings Ltd (LKR ${po1Total.toLocaleString()})`,
-      userIds['ruwan.bandara@demo.local'],
+      `Purchase Order #PO-105 — Lanka Workspace & Office Solutions (Rs. ${po1Total.toLocaleString()})`,
+      userIds['ruwan@company.lk'],
       po1Total,
     ],
   );
 
-  const po2Total = 8 * 38500; // 308,000 LKR
+  const po2Total = 15 * 92000 + 44 * 4850; // Rs. 1,593,400 (Total Monthly POs = Rs. 2,403,400 ≈ Rs. 2.4M!)
   const po2 = (await db.one<{ id: string }>(
     `INSERT INTO "purchase_orders" (company_id, number, supplier_id, status, auto_generated, notes, total)
-     VALUES ($1, 'PO-2026-0102', $2, 'APPROVED', FALSE, 'Hydraulic press seal kit emergency stock replenishment', $3)
+     VALUES ($1, 'PO-104', $2, 'APPROVED', FALSE, 'Q4 Engineering Laptops & SKF Bearings replenishment', $3)
      RETURNING id`,
-    [cid, supplierIds['Ceylon Lubricants & Hydraulics'], po2Total],
+    [cid, supplierIds['Colombo Tech & Industrial Supplies'], po2Total],
   ))!;
   await db.query(
-    `INSERT INTO "purchase_order_lines" (order_id, item_id, quantity, unit_cost) VALUES ($1, $2, 8, 38500)`,
-    [po2.id, itemIds['HYD-SEAL-200']],
+    `INSERT INTO "purchase_order_lines" (order_id, item_id, quantity, unit_cost)
+     VALUES ($1, $2, 15, 92000), ($1, $3, 44, 4850)`,
+    [po2.id, itemIds['LAP-5520'], itemIds['BRG-6205']],
   );
   await db.query(
     `INSERT INTO "approvals" (company_id, type, ref_id, title, requested_by_id, amount, status, approver_id, decided_at, comment)
-     VALUES ($1, 'PURCHASE_ORDER', $2, $3, $4, $5, 'APPROVED', $6, NOW() - INTERVAL '2 days', 'Approved for Plant A hydraulic press reliability')`,
+     VALUES ($1, 'PURCHASE_ORDER', $2, $3, $4, $5, 'APPROVED', $6, NOW() - INTERVAL '1 hour', 'Approved for IT & Plant Operations')`,
     [
       cid,
       po2.id,
-      `Purchase Order PO-2026-0102 — Ceylon Lubricants & Hydraulics (LKR ${po2Total.toLocaleString()})`,
+      `Purchase Order #PO-104 — Colombo Tech & Industrial Supplies (Rs. ${po2Total.toLocaleString()})`,
       userIds['manager@demo.local'],
       po2Total,
       userIds['admin@demo.local'],
     ],
   );
 
-  // 5 Company Knowledge / SOP Documents for RAG Citations
+  // Company SOP / Knowledge Documents for RAG Citations
   const docs: Array<[string, string, string, string]> = [
     [
-      'SOP-MNT-001: Standby Diesel Generator Preventive Maintenance Policy',
+      'SOP-MNT-001: Standby Diesel Generator #1 Preventive Maintenance Policy',
       'SOP',
       'VIEWER',
-      'Cummins standby generators (including GEN-001) must undergo full inspection every 500 running hours or 90 calendar days. Replace 15W-40 engine oil and separators, verify battery float voltage (27.2V DC), and conduct an 80% rated kW load-bank test for 60 minutes. Bearing vibration exceeding 4.5 mm/s RMS triggers immediate corrective overhaul.',
+      'Generator #1 (GEN-001) must undergo full inspection every 500 running hours or 90 calendar days. Replace 15W-40 engine oil, inspect AVR voltage stability, and run an 80% rated kW load-bank test. Bearing vibration exceeding 4.5 mm/s RMS triggers immediate overhaul.',
     ],
     [
       'SOP-CNC-004: 5-Axis CNC Spindle Vibration & Servo Escalation Standard',
       'SOP',
       'VIEWER',
-      'Mazak 5-axis machining centers (CNC-104) require continuous piezo vibration monitoring. Alert threshold is 3.5 mm/s RMS; mandatory spindle stop threshold is 5.5 mm/s RMS. Keep at least 4 units of Infineon 75A IGBT modules (IGBT-MOD-75A) in ESD Vault 2 to cap unplanned downtime under 8 hours.',
+      'Mazak 5-axis machining centers (CNC-104) require continuous piezo vibration monitoring. Alert threshold is 3.5 mm/s RMS; mandatory spindle stop threshold is 5.5 mm/s RMS. Maintain at least 5 units of Infineon 75A IGBT modules (IGBT-75A) in ESD Vault 2.',
     ],
     [
-      'POL-INV-002: Automated MRO Inventory Reorder & Approval Matrix',
+      'POL-INV-002: Automated Inventory Reorder & Approval Matrix',
       'POLICY',
       'VIEWER',
-      'Whenever an MRO inventory item drops to or below its configured reorder level, OpsPilot automatically raises a LOW_STOCK notification to Warehouse and Operations Managers, generates a replenishment Purchase Order for 2x reorder quantity, and routes an Approval request. POs up to LKR 500,000 require Manager approval; POs above LKR 500,000 require Company Admin sign-off.',
+      'Whenever stock drops to or below its reorder level, OpsPilot raises a LOW_STOCK alert, generates an automated replenishment Purchase Order (PO-AUTO-*), and routes an Approval request to Operations Managers and Administrators.',
     ],
     [
-      'SOP-SAF-007: Lockout / Tagout (LOTO) & HydraulicStored-Energy Procedure',
+      'SOP-SAF-007: Lockout / Tagout (LOTO) & Electrical Safety Standard',
       'SAFETY',
       'VIEWER',
-      'Before performing seal or electrical maintenance on HYD-008 (200T Stamping Press) or HV switchgear, technicians must isolate the main breaker, apply personal padlocks, bleed accumulator pressure to 0 bar, and log LOTO verification on the work order.',
-    ],
-    [
-      'POL-HR-011: Maintenance Shift Handover & RBAC Governance',
-      'GOVERNANCE',
-      'MANAGER',
-      'Role-Based Access Control enforces five privilege tiers: SUPER_ADMIN, COMPANY_ADMIN, MANAGER, EMPLOYEE, and VIEWER. Viewers (external/internal compliance auditors) may inspect aggregate operational KPIs without exposing personal employee contact records or mutating production data.',
+      'Before servicing Conveyor A, AC Unit #3, or HV switchgear, technicians must isolate the main breaker, apply personal padlocks, verify zero voltage, and record LOTO sign-off on the work order.',
     ],
   ];
   for (const [title, category, minRole, content] of docs) {
@@ -353,31 +328,31 @@ export async function seedEnterpriseData(db: SqlExecutor): Promise<void> {
     );
   }
 
-  // Initial Notifications
+  // Notifications
   const notifSpecs: Array<[string, string, string, string]> = [
     [
       'admin@demo.local',
       'APPROVAL_REQUESTED',
-      'Purchase order awaiting approval',
-      'PO-2026-0101 (LKR 465,000) for low-stock SKF bearings & IGBT servo modules requires sign-off.',
+      'Purchase order #PO-105 awaiting approval',
+      'Auto-generated PO-105 (Rs. 810,000) for out-of-stock Office Chairs & Wireless Mice requires your approval.',
     ],
     [
       'admin@demo.local',
       'LOW_STOCK',
-      '3 critical MRO items below reorder threshold',
-      'BRG-6205 (4/12), HYD-SEAL-200 (2/6), and IGBT-MOD-75A (1/4) are below minimum stock levels.',
+      '4 inventory items require restocking',
+      'Office Chair (0 left — Out of Stock), Wireless Mouse (8/12), SKF Bearing (4/10), and IGBT Module (2/5).',
+    ],
+    [
+      'admin@demo.local',
+      'WORK_ORDER_UPDATE',
+      'New work order #WO-1042 started',
+      'Dilshan Silva started Generator Service on Generator #1 (Rs. 125,000).',
     ],
     [
       'manager@demo.local',
-      'WORK_ORDER_UPDATE',
-      'Critical work order in progress on CNC-104',
-      'Dilshan Silva started spindle bearing & servo drive overhaul on Mazak 5-Axis CNC-104.',
-    ],
-    [
-      'tech@demo.local',
-      'TASK_ASSIGNED',
-      'Assigned: CMP-012 preventive separator service',
-      'You have been assigned preventive maintenance on Atlas Copco GA37 Compressor (CMP-012).',
+      'APPROVED',
+      'Purchase order #PO-104 approved',
+      'Vidura Kavinda approved Purchase Order #PO-104 (Rs. 1,593,400).',
     ],
   ];
   for (const [email, type, title, message] of notifSpecs) {
@@ -388,12 +363,12 @@ export async function seedEnterpriseData(db: SqlExecutor): Promise<void> {
     );
   }
 
-  // Initial Audit Logs
+  // Audit Logs
   await db.query(
     `INSERT INTO "audit_logs" (company_id, actor_id, action, entity, entity_id, ip_address, details)
      VALUES
-       ($1, $2, 'APPROVE', '/api/approvals/decide', $4, '10.20.1.14', '{"decision":"APPROVED","poNumber":"PO-2026-0102"}'::jsonb),
-       ($1, $3, 'CREATE', '/api/work-orders', NULL, '10.20.1.28', '{"asset":"CNC-104","priority":"CRITICAL"}'::jsonb)`,
+       ($1, $2, 'APPROVE', '/api/approvals/decide', $4, '10.20.1.14', '{"decision":"APPROVED","poNumber":"PO-104"}'::jsonb),
+       ($1, $3, 'CREATE', '/api/work-orders', NULL, '10.20.1.28', '{"workOrder":"WO-1042","equipment":"Generator #1"}'::jsonb)`,
     [cid, userIds['admin@demo.local'], userIds['manager@demo.local'], po2.id],
   );
 

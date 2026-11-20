@@ -1,45 +1,51 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
-import Sidebar from '@/components/Sidebar';
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { CheckCircle2, Plus, ShoppingCart, Truck, X } from 'lucide-react';
+import AppShell from '@/components/AppShell';
 import Table from '@/components/Table';
+import { api } from '@/lib/api';
 
 export default function PurchaseOrdersPage() {
-  const [rows, setRows] = useState<any[]>([]);
+  const [pos, setPos] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
-  const [form, setForm] = useState({ supplierId: '', itemId: '', quantity: '10', unitCost: '5000' });
+  const [showCreate, setShowCreate] = useState(false);
+  const [form, setForm] = useState({ supplierId: '', inventoryItemId: '', quantity: 10, unitCost: 25000, notes: '' });
   const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
 
-  async function load() {
-    const [p, s, i] = await Promise.all([
-      api('/purchase-orders'),
-      api('/suppliers'),
-      api('/inventory'),
-    ]);
-    setRows(p);
-    setSuppliers(s);
-    setItems(i);
-  }
+  const load = () =>
+    Promise.all([api('/purchase-orders'), api('/suppliers'), api('/inventory')])
+      .then(([p, s, i]) => {
+        setPos(p);
+        setSuppliers(s);
+        setItems(i);
+      })
+      .catch((e) => setError(e.message));
 
   useEffect(() => {
-    load().catch((e) => setError(e.message));
+    load();
   }, []);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    setMessage('');
     try {
       await api('/purchase-orders', {
         method: 'POST',
         body: JSON.stringify({
           supplierId: form.supplierId,
-          lines: [{ itemId: form.itemId, quantity: Number(form.quantity), unitCost: Number(form.unitCost) }],
+          notes: form.notes || undefined,
+          lines: [
+            {
+              itemId: form.inventoryItemId,
+              quantity: Number(form.quantity),
+              unitCost: Number(form.unitCost),
+            },
+          ],
         }),
       });
-      setMessage('Purchase order created and routed to Approvals Queue.');
+      setShowCreate(false);
       load();
     } catch (err: any) {
       setError(err.message);
@@ -48,10 +54,8 @@ export default function PurchaseOrdersPage() {
 
   async function receive(id: string) {
     setError('');
-    setMessage('');
     try {
-      const r = await api(`/purchase-orders/${id}/receive`, { method: 'POST' });
-      setMessage(`Received ${r.number} — inventory stock levels automatically replenished.`);
+      await api(`/purchase-orders/${id}/receive`, { method: 'POST' });
       load();
     } catch (err: any) {
       setError(err.message);
@@ -59,122 +63,160 @@ export default function PurchaseOrdersPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950">
-      <Sidebar />
-      <main className="flex-1 p-8 overflow-y-auto">
-        <h1 className="text-3xl font-bold text-white mb-1">Purchase Orders</h1>
-        <p className="text-sm text-slate-400 mb-6">
-          Manual &amp; automated low-stock procurement requests with approval gating and goods receipt
-        </p>
+    <AppShell>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Purchasing &amp; Purchase Orders</h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Automated approval routing and atomic inventory stock replenishment upon receipt
+          </p>
+        </div>
 
-        {message && (
-          <div className="mb-4 p-3 rounded-xl bg-emerald-950/60 border border-emerald-700 text-sm text-emerald-200">
-            {message}
-          </div>
-        )}
-        {error && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-sm text-rose-300">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={create} className="flex flex-wrap gap-2 mb-6 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
-          <select
-            className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm"
-            value={form.supplierId}
-            onChange={(e) => setForm({ ...form, supplierId: e.target.value })}
-            required
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/suppliers"
+            className="px-3.5 py-2.5 rounded-xl ops-card text-xs font-semibold text-slate-200 hover:border-emerald-500/40 flex items-center gap-2"
           >
-            <option value="">Select Supplier…</option>
-            {suppliers.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
-          <select
-            className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm"
-            value={form.itemId}
-            onChange={(e) => {
-              const found = items.find((x) => x.id === e.target.value);
-              setForm({
-                ...form,
-                itemId: e.target.value,
-                unitCost: found?.unitCost ? String(found.unitCost) : form.unitCost,
-              });
-            }}
-            required
+            <Truck size={15} className="text-[#00df82]" />
+            <span>Suppliers ({suppliers.length})</span>
+          </Link>
+          <button
+            type="button"
+            onClick={() => setShowCreate(true)}
+            className="px-4 py-2.5 rounded-xl ops-btn-primary text-xs font-bold flex items-center gap-2"
           >
-            <option value="">Select MRO Item…</option>
-            {items.map((i) => (
-              <option key={i.id} value={i.id}>{i.sku} — {i.name}</option>
-            ))}
-          </select>
-          <input
-            type="number"
-            min={1}
-            className="w-24 px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm"
-            placeholder="Qty"
-            value={form.quantity}
-            onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-          />
-          <input
-            type="number"
-            min={0}
-            className="w-32 px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm"
-            placeholder="Unit Cost"
-            value={form.unitCost}
-            onChange={(e) => setForm({ ...form, unitCost: e.target.value })}
-          />
-          <button className="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-sm">
-            Create PO
+            <Plus size={16} />
+            <span>Create PO</span>
           </button>
-        </form>
+        </div>
+      </div>
 
-        <Table
-          columns={['PO Number', 'Supplier', 'Line Items', 'Origin', 'Total (LKR)', 'Status', 'Warehouse Action']}
-          rows={rows.map((p) => [
-            <span key="n" className="font-mono text-sky-400 font-semibold">{p.number}</span>,
+      {error && (
+        <div className="mb-4 px-4 py-3 rounded-xl bg-rose-500/15 border border-rose-500/35 text-xs text-rose-200">
+          {error}
+        </div>
+      )}
+
+      <Table
+        columns={['PO Number', 'Supplier', 'Items', 'Total (Rs.)', 'Status', 'Action']}
+        rows={pos.map((p) => {
+          const stCls =
+            p.status === 'APPROVED' || p.status === 'RECEIVED'
+              ? 'bg-emerald-500/15 text-[#00df82] border-emerald-500/30'
+              : p.status === 'PENDING_APPROVAL'
+                ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                : 'bg-rose-500/15 text-rose-300 border-rose-500/30';
+          return [
+            <span key="n" className="font-mono font-bold text-white flex items-center gap-2">
+              <ShoppingCart size={14} className="text-[#00df82]" /> #{p.number}
+            </span>,
             p.supplier?.name,
-            <div key="l" className="text-xs text-slate-300 space-y-0.5">
-              {(p.lines ?? []).map((ln: any) => (
-                <div key={ln.id}>{ln.item?.sku}: {ln.quantity} × {Number(ln.unitCost).toLocaleString()}</div>
-              ))}
-            </div>,
-            p.autoGenerated ? (
-              <span key="a" className="px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-500/20 text-purple-300">
-                AUTO-WORKFLOW
-              </span>
-            ) : (
-              <span key="m" className="text-xs text-slate-400">Manual</span>
-            ),
-            Number(p.total ?? 0).toLocaleString(),
-            <span
-              key="s"
-              className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                p.status === 'APPROVED'
-                  ? 'bg-emerald-500/20 text-emerald-300'
-                  : p.status === 'RECEIVED'
-                    ? 'bg-sky-500/20 text-sky-300'
-                    : p.status === 'REJECTED'
-                      ? 'bg-rose-500/20 text-rose-300'
-                      : 'bg-amber-500/20 text-amber-300'
-              }`}
-            >
+            `${p.lines?.length ?? 0} line(s)`,
+            <span key="t" className="font-bold text-white">
+              Rs. {Number(p.total).toLocaleString()}
+            </span>,
+            <span key="s" className={`px-3 py-1 rounded-full text-xs font-semibold border ${stCls}`}>
               {p.status}
             </span>,
             p.status === 'APPROVED' ? (
               <button
-                key="btn"
+                key="r"
                 onClick={() => receive(p.id)}
-                className="px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold"
+                className="px-3 py-1.5 rounded-xl ops-btn-primary text-xs font-bold inline-flex items-center gap-1"
               >
-                Receive Goods
+                <CheckCircle2 size={13} /> Mark Received (+Stock)
               </button>
+            ) : p.status === 'PENDING_APPROVAL' ? (
+              <Link key="w" href="/approvals" className="text-xs font-semibold text-[#00df82] hover:underline">
+                Approve in Workflow →
+              </Link>
             ) : (
-              <span key="none" className="text-xs text-slate-500">—</span>
+              <span key="d" className="text-xs text-slate-500">
+                Completed
+              </span>
             ),
-          ])}
-        />
-      </main>
-    </div>
+          ];
+        })}
+      />
+
+      {showCreate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="ops-card ops-card-glow rounded-2xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-white">Create Purchase Order</h2>
+              <button onClick={() => setShowCreate(false)} className="text-slate-400 hover:text-white">
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={create} className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-sm">
+              <select
+                required
+                value={form.supplierId}
+                onChange={(e) => setForm({ ...form, supplierId: e.target.value })}
+                className="sm:col-span-2 px-3.5 py-2.5 rounded-xl ops-input"
+              >
+                <option value="">Select Supplier…</option>
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                required
+                value={form.inventoryItemId}
+                onChange={(e) => setForm({ ...form, inventoryItemId: e.target.value })}
+                className="sm:col-span-2 px-3.5 py-2.5 rounded-xl ops-input"
+              >
+                <option value="">Select Inventory Product…</option>
+                {items.map((i) => (
+                  <option key={i.id} value={i.id}>
+                    {i.sku} — {i.name} (Stock: {i.quantity})
+                  </option>
+                ))}
+              </select>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Order Quantity</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={form.quantity}
+                  onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
+                  className="w-full px-3.5 py-2.5 rounded-xl ops-input"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Unit Cost (Rs.)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.unitCost}
+                  onChange={(e) => setForm({ ...form, unitCost: Number(e.target.value) })}
+                  className="w-full px-3.5 py-2.5 rounded-xl ops-input"
+                />
+              </div>
+              <input
+                placeholder="Notes / Delivery instructions"
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                className="sm:col-span-2 px-3.5 py-2.5 rounded-xl ops-input"
+              />
+              <div className="sm:col-span-2 flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreate(false)}
+                  className="px-4 py-2.5 rounded-xl bg-white/[0.06] text-xs font-semibold text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="px-5 py-2.5 rounded-xl ops-btn-primary text-xs font-bold">
+                  Submit Purchase Order
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </AppShell>
   );
 }

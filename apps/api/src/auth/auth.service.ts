@@ -74,12 +74,13 @@ export class AuthService {
       lastName: string;
       role: string;
       status: string;
+      jobTitle?: string;
       companyId: string;
       companyName: string;
     }>(
       `SELECT u.id, u.email, u.password_hash AS "passwordHash",
               u.first_name AS "firstName", u.last_name AS "lastName",
-              u.role, u.status, u.company_id AS "companyId",
+              u.role, u.status, u.job_title AS "jobTitle", u.company_id AS "companyId",
               c.name AS "companyName"
        FROM "users" u
        JOIN "companies" c ON c.id = u.company_id
@@ -156,6 +157,7 @@ export class AuthService {
     firstName: string;
     lastName: string;
     role: string;
+    jobTitle?: string;
     companyId: string;
     companyName?: string;
   }) {
@@ -184,6 +186,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        jobTitle: user.jobTitle ?? '',
         companyId: user.companyId,
         companyName: user.companyName ?? '',
       },

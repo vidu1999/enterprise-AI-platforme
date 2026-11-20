@@ -8,12 +8,12 @@ export default function Table({
   rows: React.ReactNode[][];
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40">
+    <div className="overflow-x-auto rounded-2xl ops-card">
       <table className="w-full text-sm">
         <thead>
-          <tr className="bg-slate-900/90 text-left text-xs uppercase tracking-wider text-slate-400 border-b border-slate-800">
+          <tr className="border-b border-white/[0.06] text-left text-xs font-semibold text-slate-400">
             {columns.map((c) => (
-              <th key={c} className="px-4 py-3 font-semibold">
+              <th key={c} className="px-5 py-3.5 whitespace-nowrap">
                 {c}
               </th>
             ))}
@@ -21,9 +21,12 @@ export default function Table({
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className="border-t border-slate-800/80 hover:bg-slate-900/70 transition-colors">
+            <tr
+              key={i}
+              className="border-b last:border-b-0 border-white/[0.045] hover:bg-emerald-500/[0.04] transition-colors"
+            >
               {r.map((cell, j) => (
-                <td key={j} className="px-4 py-3 align-middle text-slate-200">
+                <td key={j} className="px-5 py-3.5 align-middle text-slate-200">
                   {cell === null || cell === undefined || cell === '' ? '—' : cell}
                 </td>
               ))}
@@ -31,7 +34,7 @@ export default function Table({
           ))}
           {rows.length === 0 && (
             <tr>
-              <td colSpan={columns.length} className="px-4 py-10 text-center text-slate-500">
+              <td colSpan={columns.length} className="px-5 py-12 text-center text-slate-500 text-xs">
                 No records match the current filter.
               </td>
             </tr>

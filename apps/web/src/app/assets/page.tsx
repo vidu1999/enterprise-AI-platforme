@@ -1,47 +1,32 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
-import Sidebar from '@/components/Sidebar';
+import React, { useEffect, useState } from 'react';
+import { Cpu, Plus, X } from 'lucide-react';
+import AppShell from '@/components/AppShell';
 import Table from '@/components/Table';
+import { api } from '@/lib/api';
 
 export default function AssetsPage() {
-  const [rows, setRows] = useState<any[]>([]);
-  const [form, setForm] = useState({ code: '', name: '', category: 'CNC Machining', location: '', maintenanceIntervalDays: '60' });
-  const [message, setMessage] = useState('');
+  const [assets, setAssets] = useState<any[]>([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ code: '', name: '', category: 'Power Generation', location: '' });
   const [error, setError] = useState('');
 
-  async function load() {
-    setRows(await api('/assets'));
-  }
+  const load = () =>
+    api('/assets')
+      .then(setAssets)
+      .catch((e) => setError(e.message));
 
   useEffect(() => {
-    load().catch((e) => setError(e.message));
+    load();
   }, []);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     try {
-      await api('/assets', {
-        method: 'POST',
-        body: JSON.stringify({
-          ...form,
-          maintenanceIntervalDays: Number(form.maintenanceIntervalDays || 60),
-        }),
-      });
-      setForm({ code: '', name: '', category: 'CNC Machining', location: '', maintenanceIntervalDays: '60' });
-      load();
-    } catch (err: any) {
-      setError(err.message);
-    }
-  }
-
-  async function schedulePm(id: string, code: string) {
-    setError('');
-    setMessage('');
-    try {
-      await api(`/assets/${id}/schedule-maintenance`, { method: 'POST' });
-      setMessage(`Preventive maintenance work order generated for ${code}.`);
+      await api('/assets', { method: 'POST', body: JSON.stringify(form) });
+      setForm({ code: '', name: '', category: 'Power Generation', location: '' });
+      setShowAdd(false);
       load();
     } catch (err: any) {
       setError(err.message);
@@ -49,65 +34,110 @@ export default function AssetsPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950">
-      <Sidebar />
-      <main className="flex-1 p-8 overflow-y-auto">
-        <h1 className="text-3xl font-bold text-white mb-1">Industrial Machines &amp; Assets</h1>
-        <p className="text-sm text-slate-400 mb-6">
-          Equipment registry, total lifecycle maintenance spend, and scheduled preventive intervals
-        </p>
+    <AppShell>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Machines &amp; Equipment Assets</h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Physical equipment registry, operational health status, and preventive maintenance schedules
+          </p>
+        </div>
 
-        {message && (
-          <div className="mb-4 p-3 rounded-xl bg-emerald-950/60 border border-emerald-700 text-sm text-emerald-200">
-            {message}
+        <button
+          type="button"
+          onClick={() => setShowAdd(true)}
+          className="px-4 py-2.5 rounded-xl ops-btn-primary text-xs font-bold flex items-center gap-2"
+        >
+          <Plus size={16} />
+          <span>Register Equipment</span>
+        </button>
+      </div>
+
+      {error && (
+        <div className="mb-4 px-4 py-3 rounded-xl bg-rose-500/15 border border-rose-500/35 text-xs text-rose-200">
+          {error}
+        </div>
+      )}
+
+      <Table
+        columns={['Asset Code', 'Equipment Name', 'Category', 'Location', 'Status', 'Total Spend (Rs.)', 'Next Service']}
+        rows={assets.map((a) => [
+          <span key="c" className="font-mono text-xs font-bold text-[#00df82] flex items-center gap-1.5">
+            <Cpu size={14} /> {a.code}
+          </span>,
+          <span key="n" className="font-semibold text-white">
+            {a.name}
+          </span>,
+          a.category,
+          a.location || 'Colombo Plant',
+          <span
+            key="s"
+            className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+              a.status === 'OPERATIONAL'
+                ? 'bg-emerald-500/15 text-[#00df82] border-emerald-500/30'
+                : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+            }`}
+          >
+            {a.status}
+          </span>,
+          `Rs. ${Number(a.totalMaintenanceCost ?? 0).toLocaleString()}`,
+          a.nextMaintenanceAt ? new Date(a.nextMaintenanceAt).toLocaleDateString() : 'Scheduled',
+        ])}
+      />
+
+      {showAdd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="ops-card ops-card-glow rounded-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-white">Register Equipment</h2>
+              <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-white">
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={create} className="space-y-3.5 text-sm">
+              <input
+                required
+                placeholder="Asset Code (e.g. GEN-002)"
+                value={form.code}
+                onChange={(e) => setForm({ ...form, code: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl ops-input"
+              />
+              <input
+                required
+                placeholder="Equipment Name (e.g. Generator #2)"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl ops-input"
+              />
+              <input
+                required
+                placeholder="Category"
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl ops-input"
+              />
+              <input
+                placeholder="Location"
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl ops-input"
+              />
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAdd(false)}
+                  className="px-4 py-2.5 rounded-xl bg-white/[0.06] text-xs font-semibold text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="px-5 py-2.5 rounded-xl ops-btn-primary text-xs font-bold">
+                  Register Asset
+                </button>
+              </div>
+            </form>
           </div>
-        )}
-        {error && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-sm text-rose-300">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={create} className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
-          <input className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm" placeholder="Code (e.g. CNC-205)" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} required />
-          <input className="md:col-span-2 px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm" placeholder="Equipment Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-          <input className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm" placeholder="Plant Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
-          <input type="number" className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm" placeholder="PM Interval (days)" value={form.maintenanceIntervalDays} onChange={(e) => setForm({ ...form, maintenanceIntervalDays: e.target.value })} />
-          <button className="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-sm">
-            + Register Asset
-          </button>
-        </form>
-
-        <Table
-          columns={['Code', 'Equipment', 'Location', 'Status', 'Open Orders', 'Maint. Spend (LKR)', 'Next PM', 'Schedule']}
-          rows={rows.map((a) => [
-            <span key="c" className="font-mono text-sky-400 font-semibold">{a.code}</span>,
-            <div key="n">
-              <p className="font-medium text-white">{a.name}</p>
-              <p className="text-xs text-slate-500">{a.category}</p>
-            </div>,
-            a.location,
-            <span
-              key="st"
-              className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                a.status === 'OPERATIONAL' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/20 text-amber-300'
-              }`}
-            >
-              {a.status}
-            </span>,
-            a.openWorkOrders ?? 0,
-            Number(a.totalMaintenanceCost ?? 0).toLocaleString(),
-            a.nextMaintenanceAt ? new Date(a.nextMaintenanceAt).toLocaleDateString() : '—',
-            <button
-              key="pm"
-              onClick={() => schedulePm(a.id, a.code)}
-              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-sky-300"
-            >
-              + Schedule PM
-            </button>,
-          ])}
-        />
-      </main>
-    </div>
+        </div>
+      )}
+    </AppShell>
   );
 }
