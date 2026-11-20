@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: opspilot-postgres
+    environment:
+      POSTGRES_USER: opspilot
+      POSTGRES_PASSWORD: opspilot_dev_password
+      POSTGRES_DB: opspilot
+    ports: ["5432:5432"]
+    volumes: [opspilot-pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opspilot -d opspilot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: opspilot-redis
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ai:
+    build: ./services/ai
+    container_name: opspilot-ai
+    environment:
+      OLLAMA_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: llama3.1:8b
+    ports: ["8001:8001"]
+
+  api:
+    build: ./apps/api
+    container_name: opspilot-api
+    environment:
+      NODE_ENV: production
+      API_PORT: 3001
+      DATABASE_DRIVER: pg
+      DATABASE_URL: postgresql://opspilot:opspilot_dev_password@postgres:5432/opspilot
+      REDIS_URL: redis://redis:6379
+      AI_SERVICE_URL: http://ai:8001
+      JWT_SECRET: opspilot-docker-dev-secret-change-in-prod-32chars
+      JWT_EXPIRES_IN: 15m
+      AUTO_SEED: "true"
+    ports: ["3001:3001"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      ai: { condition: service_started }
+
+  web:
+    build: ./apps/web
+    container_name: opspilot-web
+    environment:
+      NODE_ENV: production
+      INTERNAL_API_URL: http://api:3001
+    ports: ["3000:3000"]
+    depends_on: [api]
+
+volumes:
+  opspilot-pgdata:

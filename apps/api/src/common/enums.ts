@@ -1,0 +1,52 @@
+export enum Role {
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  COMPANY_ADMIN = 'COMPANY_ADMIN',
+  MANAGER = 'MANAGER',
+  EMPLOYEE = 'EMPLOYEE',
+  VIEWER = 'VIEWER',
+}
+
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  INVITED = 'INVITED',
+  SUSPENDED = 'SUSPENDED',
+}
+
+export enum WorkOrderStatus {
+  OPEN = 'OPEN',
+  ASSIGNED = 'ASSIGNED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  ON_HOLD = 'ON_HOLD',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum Priority {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+  CRITICAL = 'CRITICAL',
+}
+
+export enum ApprovalStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  RECEIVED = 'RECEIVED',
+}
+
+export enum TransactionType {
+  IN = 'IN',
+  OUT = 'OUT',
+  ADJUSTMENT = 'ADJUSTMENT',
+}
+
+export enum NotificationType {
+  TASK_ASSIGNED = 'TASK_ASSIGNED',
+  APPROVAL_REQUESTED = 'APPROVAL_REQUESTED',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  LOW_STOCK = 'LOW_STOCK',
+  WORK_ORDER_UPDATE = 'WORK_ORDER_UPDATE',
+  SYSTEM = 'SYSTEM',
+}

@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.next/
+out/
+.env
+.env.local
+*.log
+coverage/
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.pglite-data/
+playwright-report/
+test-results/
+tsconfig.tsbuildinfo
+prisma/dev.db
+Unselected files/
+.DS_Store
