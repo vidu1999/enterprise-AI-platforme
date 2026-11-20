@@ -1,0 +1,24 @@
+{
+  "name": "opspilot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OpsPilot — AI-Powered Multi-Tenant Enterprise Operations Intelligence Platform",
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev:api": "npm run start:dev --workspace=apps/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:ai": "uvicorn app.main:app --reload --host 0.0.0.0 --port 8001 --app-dir services/ai",
+    "db:migrate": "npm run db:migrate --workspace=apps/api",
+    "db:seed": "npm run db:seed --workspace=apps/api",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:e2e": "npm run test:e2e --workspace=apps/api",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
