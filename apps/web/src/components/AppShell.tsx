@@ -26,9 +26,10 @@ import {
   Wrench,
   X,
 } from 'lucide-react';
-import { api, getUser, logout } from '@/lib/api';
+import { API_BASE, api, getUser, logout } from '@/lib/api';
 import OpsLogo from './OpsLogo';
 import Avatar from './Avatar';
+import GlobalAiCopilot from './GlobalAiCopilot';
 
 const MAIN_NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, match: ['/dashboard'] },
@@ -79,7 +80,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       .then((d) => setUnread(d.unread ?? 0))
       .catch(() => undefined);
 
-    const wsBase = process.env.NEXT_PUBLIC_API_URL || undefined;
+    const wsBase = API_BASE || undefined;
     const socket = io(wsBase, { path: '/socket.io', transports: ['websocket', 'polling'] });
     socket.on('connect', () => {
       socket.emit('join', { userId: u.id, companyId: u.companyId });
@@ -377,6 +378,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* Page Body */}
         <main className="flex-1 px-4 sm:px-6 md:px-8 py-6 max-w-[1440px] w-full mx-auto">{children}</main>
       </div>
+
+      {/* Global Floating AI Copilot Orb & Auto-Navigation Arrival Guide */}
+      <GlobalAiCopilot />
 
       {/* Mobile Bottom Tab Bar matching Reference Phone View */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 h-16 bg-[#08101c]/95 backdrop-blur-xl border-t border-white/10 flex items-center justify-around z-30">

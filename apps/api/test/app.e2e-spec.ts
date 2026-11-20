@@ -238,6 +238,23 @@ describe('OpsPilot Enterprise API (e2e)', () => {
 
     expect(aiRes.body.answer).toContain('CNC-200');
     expect(aiRes.body.evidence.length).toBeGreaterThan(0);
+    expect(Array.isArray(aiRes.body.uiBlocks)).toBe(true);
+    expect(aiRes.body.uiBlocks.some((b: any) => b.type === 'ranked_list')).toBe(true);
+    expect(aiRes.body.uiBlocks.some((b: any) => b.type === 'chart')).toBe(true);
+
+    // Query AI Assistant about a website feature -> triggers automatic route navigation + navigation_card UI
+    const navAi = await request(app.getHttpServer())
+      .post('/api/ai/ask')
+      .set('Authorization', `Bearer ${tenantAToken}`)
+      .send({
+        question: 'Where can I add a new product to inventory?',
+        currentPage: '/ai-assistant',
+      })
+      .expect(201);
+    expect(navAi.body.intent.category).toBe('WEB_NAVIGATION');
+    expect(navAi.body.intent.autoNavigate.shouldMove).toBe(true);
+    expect(navAi.body.intent.autoNavigate.route).toBe('/inventory');
+    expect(navAi.body.uiBlocks[0].type).toBe('navigation_card');
 
     // Verify VIEWER AI query restricts employee data
     const viewerAi = await request(app.getHttpServer())

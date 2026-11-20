@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { AiService } from './ai.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -12,6 +12,22 @@ export class AskDto {
   @IsNotEmpty()
   @IsString()
   question: string;
+
+  @IsOptional()
+  @IsArray()
+  history?: Array<{ role: string; content: string }>;
+
+  @IsOptional()
+  @IsString()
+  currentPage?: string;
+
+  @IsOptional()
+  @IsString()
+  openRouterKey?: string;
+
+  @IsOptional()
+  @IsString()
+  openRouterModel?: string;
 }
 
 export class CreateDocumentDto {
@@ -45,9 +61,17 @@ export class AiController {
   }
 
   @Post('ask')
-  @ApiOperation({ summary: 'Ask a permission-aware operational or SOP policy question with evidence & citations' })
+  @ApiOperation({
+    summary:
+      'Permission-aware Enterprise AI Copilot with Website Auto-Navigation, Live PostgreSQL Generative UI & OpenRouter LLM support',
+  })
   ask(@CurrentUser() u: AuthUser, @Body() dto: AskDto) {
-    return this.svc.ask(u.companyId, u.role, dto.question);
+    return this.svc.ask(u.companyId, u.role, dto.question, {
+      history: dto.history,
+      currentPage: dto.currentPage,
+      openRouterKey: dto.openRouterKey,
+      openRouterModel: dto.openRouterModel,
+    });
   }
 
   @Post('documents')
