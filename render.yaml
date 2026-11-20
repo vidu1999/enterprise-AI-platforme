@@ -1,0 +1,30 @@
+services:
+  # 1. NestJS Enterprise API + Socket.IO + Swagger (/docs)
+  # Works immediately on Free Tier (even without DATABASE_URL via embedded PostgreSQL 16,
+  # or paste a free Neon.tech / Supabase DATABASE_URL for permanent cloud storage).
+  - type: web
+    name: opspilot-api
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build --workspace=apps/api
+    startCommand: npm run start:prod --workspace=apps/api
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AUTO_SEED
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+
+  # 2. Optional Python FastAPI AI RAG Service (OpsPilot API also has built-in AI fallback)
+  - type: web
+    name: opspilot-ai
+    runtime: python
+    plan: free
+    rootDir: services/ai
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health

@@ -79,7 +79,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       .then((d) => setUnread(d.unread ?? 0))
       .catch(() => undefined);
 
-    const socket = io({ path: '/socket.io', transports: ['websocket', 'polling'] });
+    const wsBase = process.env.NEXT_PUBLIC_API_URL || undefined;
+    const socket = io(wsBase, { path: '/socket.io', transports: ['websocket', 'polling'] });
     socket.on('connect', () => {
       socket.emit('join', { userId: u.id, companyId: u.companyId });
     });

@@ -51,12 +51,14 @@ export class DatabaseService implements SqlExecutor, OnModuleInit, OnModuleDestr
       const url = new URL(connectionString);
       const host = url.hostname || '127.0.0.1';
       const port = Number(url.port || 5432);
+      const isLocal = host === '127.0.0.1' || host === 'localhost' || host === 'postgres';
+      const timeoutMs = isLocal ? 800 : 5000;
       return await new Promise<boolean>((resolve) => {
         const socket = net.createConnection({ host, port });
         const timer = setTimeout(() => {
           socket.destroy();
           resolve(false);
-        }, 800);
+        }, timeoutMs);
         socket.once('connect', () => {
           clearTimeout(timer);
           socket.end();
@@ -93,11 +95,23 @@ export class DatabaseService implements SqlExecutor, OnModuleInit, OnModuleDestr
     }
 
     if (dbUrl && (forcedDriver === 'pg' || (await this.canReachPostgres(dbUrl)))) {
+      const host = (() => {
+        try {
+          return new URL(dbUrl).hostname;
+        } catch {
+          return 'localhost';
+        }
+      })();
+      const needsSsl =
+        dbUrl.includes('sslmode=require') ||
+        (host !== 'localhost' && host !== '127.0.0.1' && host !== 'postgres');
+
       this.driver = 'pg';
       this.pool = new Pool({
         connectionString: dbUrl,
-        max: Number(process.env.PG_POOL_MAX ?? 20),
+        max: Number(process.env.PG_POOL_MAX ?? 10),
         idleTimeoutMillis: 30_000,
+        ...(needsSsl ? { ssl: { rejectUnauthorized: false } } : {}),
       });
       await this.pool.query('SELECT 1');
       this.logger.log('Connected to external PostgreSQL server via pg.Pool');
